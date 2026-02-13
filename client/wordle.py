@@ -19,6 +19,7 @@ class Wordle:
     word_buffer_len = 0
 
     all_words = []
+    all_letters = {}
 
     animate_now = False
     has_won = 0
@@ -32,6 +33,9 @@ class Wordle:
         with open(filename) as file:
             for line in file:
                 self.all_words.append(line[0:-1])
+
+        for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+            self.all_letters[letter] = 'b'
 
         self.choose_random_word()
 
@@ -76,8 +80,30 @@ class Wordle:
                 write('\n', flush=False)
             write('')
         
-        write(self.bottom_text + '\n')
+        write(self.bottom_text + '\n\n\n')
         if self.animate_now: self.animate_now = False
+
+    def print_keyboard(self):
+        key_layout = 'QWERTYUIOPASDFGHJKLZXCVBNM'
+
+        for key in key_layout:
+            string = ''
+
+            match self.all_letters[key]:
+                case 'g':
+                    string = Fore.BLACK + Back.GREEN
+
+                case 'y':
+                    string = Fore.BLACK + Back.YELLOW
+
+                case 'w':
+                    string = Fore.BLACK + Back.WHITE
+
+            write(f'{string} {key} {Style.RESET_ALL}', flush=False)
+            
+            if key == 'P': write('\n ')
+            elif key == 'L': write('\n   ')
+            elif key == 'M': write('\n\n')
 
     def choose_random_word(self):
         self.current_word = random.choice(self.all_words).upper()
@@ -104,7 +130,6 @@ class Wordle:
                 return
 
             self.match_guess()
-
             self.board[self.word_buffer_index] = self.word_buffer
 
             self.word_buffer_index += 1
@@ -147,6 +172,9 @@ class Wordle:
         self.word_buffer = deepcopy(temp_buf)
         self.animate_now = True
 
+        for elem in temp_buf:
+            self.all_letters[elem[0]] = elem[1] if self.all_letters[elem[0]] != 'g' else 'g'
+
         if color_buf == ['g', 'g', 'g', 'g', 'g']:
             self.has_won = 1
 
@@ -156,6 +184,7 @@ class Wordle:
 
         while self.has_won == 0:
             self.print_board()
+            self.print_keyboard()
             self.take_input()
         
         self.print_board()
