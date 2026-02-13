@@ -1,4 +1,5 @@
 client/__pycache__/
 client/test.py
+client/5-letter-words-backup.txt
 
 server/__pycache__/
