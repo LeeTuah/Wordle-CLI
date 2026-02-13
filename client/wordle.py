@@ -80,7 +80,7 @@ class Wordle:
         if self.animate_now: self.animate_now = False
 
     def choose_random_word(self):
-        self.current_word = random.choice(self.all_words)
+        self.current_word = random.choice(self.all_words).upper()
 
     def take_input(self):
         self.bottom_text = ' ' * 100
