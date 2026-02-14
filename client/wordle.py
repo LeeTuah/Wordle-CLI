@@ -5,9 +5,22 @@ import time
 from pynput.keyboard import Key
 from colorama import Fore, Back, Style
 from copy import deepcopy
-from os.path import join
-from playsound3 import playsound
+import platform
+import sounddevice as sd
+import numpy as np
 filename = '5-letter-words.txt'
+
+def play_sound(sound: str):
+    freq = 1500 if sound == 'g' else 850 if sound == 'y' else 200
+    decay = 8 if sound == 'g' else 10 if sound == 'y' else 12
+    sr = 44100
+    duration = 0.5
+    amp = 0.7 if sound == 'w' else 0.5
+
+    t = np.linspace(0, duration, int(sr * duration), endpoint=False)
+    s = amp * np.exp(-decay * t) * np.sin(2 * np.pi * freq * t)
+    sd.play(s, sr)
+    sd.wait()
 
 class Wordle:
     board = []
@@ -20,6 +33,7 @@ class Wordle:
 
     all_words = []
     all_letters = {}
+    all_chars = 'QWERTYUIOPASDFGHJKLZXCVBNM'
 
     animate_now = False
     has_won = 0
@@ -34,7 +48,7 @@ class Wordle:
             for line in file:
                 self.all_words.append(line[0:-1])
 
-        for letter in 'QWERTYUIOPASDFGHJKLZXCVBNM':
+        for letter in self.all_chars:
             self.all_letters[letter] = 'b'
 
         self.choose_random_word()
@@ -65,17 +79,7 @@ class Wordle:
                           + Style.RESET_ALL, flush=(x == 1)
                     )
                     if i == self.word_buffer_index - 1 and self.animate_now and x == 1:
-                        match board_elem[1]:
-                            case 'g':
-                                playsound(join('assets', 'green_sound.mp3'), block=False)
-                            
-                            case 'y':
-                                playsound(join('assets', 'yellow_sound.mp3'), block=False)
-
-                            case 'w':
-                                playsound(join('assets', 'white_sound.mp3'), block=False)
-                        
-                        time.sleep(0.300)
+                        play_sound(board_elem[1])
 
                 write('\n', flush=False)
             write('')
@@ -84,9 +88,7 @@ class Wordle:
         if self.animate_now: self.animate_now = False
 
     def print_keyboard(self):
-        key_layout = 'QWERTYUIOPASDFGHJKLZXCVBNM'
-
-        for key in key_layout:
+        for key in self.all_chars:
             string = ''
 
             match self.all_letters[key]:
@@ -107,27 +109,55 @@ class Wordle:
 
     def choose_random_word(self):
         self.current_word = random.choice(self.all_words).upper()
+        self.current_word = 'GUIDE'
 
     def take_input(self):
         self.bottom_text = ' ' * 100
         key = detect_keypress()
+        move_to_next_word = False
 
-        if str(key)[0] == '\'' and self.word_buffer_len < 5:
-            self.word_buffer[self.word_buffer_len] = str(key)[1].capitalize()
-            self.word_buffer_len += 1
-        
-        elif key == Key.backspace and self.word_buffer_len > 0:
-            self.word_buffer_len -= 1
-            self.word_buffer[self.word_buffer_len] = ' '
+        if platform.system() in ['Windows', 'Darwin']:
+            if str(key)[0] == '\'' and self.word_buffer_len < 5:
+                self.word_buffer[self.word_buffer_len] = str(key)[1].capitalize()
+                self.word_buffer_len += 1
+            
+            elif key == Key.backspace and self.word_buffer_len > 0:
+                self.word_buffer_len -= 1
+                self.word_buffer[self.word_buffer_len] = ' '
 
-        elif key == Key.enter:
-            if self.word_buffer_len != 5:
-                self.bottom_text = 'Complete the word first!'
-                return
+            elif key == Key.enter:
+                if self.word_buffer_len != 5:
+                    self.bottom_text = 'Complete the word first!'
+                    return
 
-            if not "".join(self.word_buffer).lower() in self.all_words:
-                self.bottom_text = 'This word is not present in the program\'s dictionary.'
-                return
+                if not "".join(self.word_buffer).lower() in self.all_words:
+                    self.bottom_text = 'This word is not present in the program\'s dictionary.'
+                    return
+                
+                move_to_next_word = True
+
+        elif platform.system() == 'Linux':
+            if key in self.all_chars and self.word_buffer_len < 5:
+                self.word_buffer[self.word_buffer_len] = key[0]
+                self.word_buffer_len += 1
+
+            elif key == 'BACKSPACE' and self.word_buffer_len > 0:
+                self.word_buffer_len -= 1
+                self.word_buffer[self.word_buffer_len] = ' '
+
+            elif key == 'ENTER':
+                if self.word_buffer_len != 5:
+                    self.bottom_text = 'Complete the word first!'
+                    return
+                
+                if not "".join(self.word_buffer).lower() in self.all_words:
+                    self.bottom_text = 'This word is not present in the program\'s dictionary.'
+                    return
+                
+                move_to_next_word = True
+
+        if move_to_next_word:
+            move_to_next_word = False
 
             self.match_guess()
             self.board[self.word_buffer_index] = self.word_buffer
@@ -191,14 +221,13 @@ class Wordle:
         
         self.print_board()
         if self.has_won == 1:
-            self.bottom_text = 'YOU SUCCESSFULLY GUESSED THE WORD!!!!!'
+            self.bottom_text = 'YOU GUESSED THE WORD!!!!!'
 
         else:
             self.bottom_text = f'The word was {self.current_word.upper()} :c'
 
         self.print_board()
-        time.sleep(3)
-            
+        time.sleep(3)       
 
 
 if __name__ == '__main__':
