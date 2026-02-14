@@ -109,7 +109,6 @@ class Wordle:
 
     def choose_random_word(self):
         self.current_word = random.choice(self.all_words).upper()
-        self.current_word = 'GUIDE'
 
     def take_input(self):
         self.bottom_text = ' ' * 100
