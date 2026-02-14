@@ -1,4 +1,4 @@
-from common import clear, write, detect_keypress
+from common import clear, write, detect_keypress, flush_input
 
 import random
 import time
@@ -34,7 +34,7 @@ class Wordle:
             for line in file:
                 self.all_words.append(line[0:-1])
 
-        for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+        for letter in 'QWERTYUIOPASDFGHJKLZXCVBNM':
             self.all_letters[letter] = 'b'
 
         self.choose_random_word()
@@ -172,8 +172,10 @@ class Wordle:
         self.word_buffer = deepcopy(temp_buf)
         self.animate_now = True
 
+        hierarchy = ['b', 'w', 'y', 'g']
         for elem in temp_buf:
-            self.all_letters[elem[0]] = elem[1] if self.all_letters[elem[0]] != 'g' else 'g'
+            if hierarchy.index(self.all_letters[elem[0]]) < hierarchy.index(elem[1]):
+                self.all_letters[elem[0]] = elem[1] 
 
         if color_buf == ['g', 'g', 'g', 'g', 'g']:
             self.has_won = 1
@@ -204,3 +206,4 @@ if __name__ == '__main__':
     wordle = Wordle()
 
     wordle.run()
+    flush_input()

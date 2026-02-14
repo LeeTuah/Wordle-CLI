@@ -1,7 +1,8 @@
-from sys import stdout
+import sys
 import platform
-from os import system
-from pynput.keyboard import Key, Listener
+import os
+from pynput.keyboard import Listener
+from time import sleep
 
 key_pressed = ''
 
@@ -18,16 +19,31 @@ def detect_keypress():
     return key_pressed
 
 def clear():
-    system('cls' if platform.system() == 'Windows' else 'clear')
+    os.system('cls' if platform.system() == 'Windows' else 'clear')
 
 def reset_cursor():
-    stdout.write('\033[H')
+    sys.stdout.write('\033[H')
 
 def write(message: str, *, flush = True, resetcursor = False):
     if resetcursor: reset_cursor()
-    stdout.write(message)
-    if flush: stdout.flush()
+    sys.stdout.write(message)
+    if flush: sys.stdout.flush()
 
 if __name__ == '__main__':
     while True:
         print(detect_keypress())
+
+def slow_print(msg: str, delay: int = 50):
+    for i in msg:
+        print(i, flush=True)
+        sleep(delay / 1000)
+
+def flush_input():
+    try:
+        import msvcrt
+        while msvcrt.kbhit():
+            msvcrt.getch()
+    
+    except:
+        import termios, tty
+        termios.tcflush(sys.stdin, termios.TCIFLUSH)  # type: ignore
