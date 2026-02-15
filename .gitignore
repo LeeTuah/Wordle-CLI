@@ -3,3 +3,4 @@ client/test.py
 client/5-letter-words-backup.txt
 
 server/__pycache__/
+server/test.py

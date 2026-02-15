@@ -14,7 +14,7 @@ def play_sound(sound: str):
     freq = 1500 if sound == 'g' else 850 if sound == 'y' else 200
     decay = 8 if sound == 'g' else 10 if sound == 'y' else 12
     sr = 44100
-    duration = 0.5
+    duration = 0.4
     amp = 0.7 if sound == 'w' else 0.5
 
     t = np.linspace(0, duration, int(sr * duration), endpoint=False)
