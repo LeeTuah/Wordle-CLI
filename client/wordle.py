@@ -5,7 +5,6 @@ import time
 from pynput.keyboard import Key
 from colorama import Fore, Back, Style
 from copy import deepcopy
-import platform
 import sounddevice as sd
 import numpy as np
 filename = '5-letter-words.txt'
@@ -53,6 +52,7 @@ class Wordle:
 
         self.choose_random_word()
 
+    # TODO: Add a smoother toggleable animation 
     def print_board(self):
         write('', resetcursor=True)
         for i in range(5):
@@ -112,51 +112,24 @@ class Wordle:
 
     def take_input(self):
         self.bottom_text = ' ' * 100
-        key = detect_keypress()
-        move_to_next_word = False
+        key = str(detect_keypress()).upper()
 
-        if platform.system() in ['Windows', 'Darwin']:
-            if str(key)[0] == '\'' and self.word_buffer_len < 5:
-                self.word_buffer[self.word_buffer_len] = str(key)[1].capitalize()
-                self.word_buffer_len += 1
+        if str(key) in self.all_chars and self.word_buffer_len < 5:
+            self.word_buffer[self.word_buffer_len] = str(key)
+            self.word_buffer_len += 1
+
+        elif key == 'BACKSPACE' and self.word_buffer_len > 0:
+            self.word_buffer_len -= 1
+            self.word_buffer[self.word_buffer_len] = ' '
+
+        elif key == 'ENTER':
+            if self.word_buffer_len != 5:
+                self.bottom_text = 'Complete the word first!'
+                return
             
-            elif key == Key.backspace and self.word_buffer_len > 0:
-                self.word_buffer_len -= 1
-                self.word_buffer[self.word_buffer_len] = ' '
-
-            elif key == Key.enter:
-                if self.word_buffer_len != 5:
-                    self.bottom_text = 'Complete the word first!'
-                    return
-
-                if not "".join(self.word_buffer).lower() in self.all_words:
-                    self.bottom_text = 'This word is not present in the program\'s dictionary.'
-                    return
-                
-                move_to_next_word = True
-
-        elif platform.system() == 'Linux':
-            if key in self.all_chars and self.word_buffer_len < 5:
-                self.word_buffer[self.word_buffer_len] = key[0]
-                self.word_buffer_len += 1
-
-            elif key == 'BACKSPACE' and self.word_buffer_len > 0:
-                self.word_buffer_len -= 1
-                self.word_buffer[self.word_buffer_len] = ' '
-
-            elif key == 'ENTER':
-                if self.word_buffer_len != 5:
-                    self.bottom_text = 'Complete the word first!'
-                    return
-                
-                if not "".join(self.word_buffer).lower() in self.all_words:
-                    self.bottom_text = 'This word is not present in the program\'s dictionary.'
-                    return
-                
-                move_to_next_word = True
-
-        if move_to_next_word:
-            move_to_next_word = False
+            if not "".join(self.word_buffer).lower() in self.all_words:
+                self.bottom_text = 'This word is not present in the program\'s dictionary.'
+                return
 
             self.match_guess()
             self.board[self.word_buffer_index] = self.word_buffer
@@ -209,6 +182,7 @@ class Wordle:
         if color_buf == ['g', 'g', 'g', 'g', 'g']:
             self.has_won = 1
 
+    # TODO: Add "Today's Wordle" from NYT
     def run(self):
         clear()
         self.choose_random_word()

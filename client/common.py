@@ -1,25 +1,30 @@
 import sys
 import platform
 import os
-from pynput.keyboard import Listener
 from time import sleep
 
 key_pressed = ''
 
 def detect_keypress():
-    if platform.system() in ['Windows', 'Darwin']:
-        def on_press(key):
-            global key_pressed
-            key_pressed = key
-            return False
-        
-        with Listener(on_press=on_press) as listener: # type: ignore
-            listener.join()
+    if platform.system() == 'Windows':
+        import msvcrt
+        key = msvcrt.getch()
 
-        global key_pressed
-        return key_pressed
-    
-    elif platform.system() == 'Linux':
+        if key == b'\r':
+            return 'ENTER'
+        
+        if key == b'\x03': 
+            return 'ctrl+c'
+
+        elif key == b'\x08':
+            return 'BACKSPACE'
+
+        if key in (b'\x00', b'\xe0'):
+            return key + msvcrt.getch()
+
+        return key.decode('utf-8', errors='ignore')
+
+    elif platform.system() in ['Darwin', 'Linux']:
         import tty, termios
         
         fd = sys.stdin.fileno()
